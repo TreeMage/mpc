@@ -2,10 +2,12 @@ package org.treemage
 package mpc.parser
 
 import ParserError.{UnexpectedEndOfInput, UnexpectedInput}
-import org.treemage.mpc.typeclasses.Functor.*
-import org.treemage.mpc.typeclasses.Monad.*
+import mpc.typeclasses.Functor.*
+import mpc.typeclasses.Monad.*
 import ParserTypeClasses.given
 import ParserOps.*
+import mpc.typeclasses.Traversable.*
+import mpc.util.ListTypeClasses.given
 
 import scala.annotation.tailrec
 
@@ -17,28 +19,33 @@ object Parser:
     ParserResult.Fail(_, error)
   )
 
-  def text(txt: String): Parser[String] = Parser(input =>
-    input.nextChars(txt.length) match
+  def char(char: Char): Parser[Char] = Parser(input =>
+    input.nextChar match
+      case Some(value) if value == char =>
+        ParserResult.Success(input.advanceBy(1).get, value)
       case Some(value) =>
-        if (value == txt)
-          ParserResult.Success(input.advanceBy(txt.length).get, value)
-        else
-          ParserResult.Fail(
-            input,
-            ParserError.UnexpectedInput(
-              input.currentLocation,
-              s"Expected '$txt' but found '$value'."
-            )
+        ParserResult.Fail(
+          input,
+          ParserError.UnexpectedInput(
+            input.currentLocation,
+            s"Expected '$char' but found '$value'."
           )
+        )
       case None =>
         ParserResult.Fail(
           remainingInput = input,
           error = UnexpectedEndOfInput(
             input.currentLocation,
-            s"Expected '$txt' but found only ${input.remainingCharacters} characters."
+            s"Expected '$char' but found end of file"
           )
         )
   )
+
+  def text(txt: String): Parser[String] = txt
+    .map(Parser.char(_))
+    .toList
+    .sequence
+    .map(_.mkString)
 
   def range(predicate: Char => Boolean): Parser[String] = Parser(input =>
     @tailrec

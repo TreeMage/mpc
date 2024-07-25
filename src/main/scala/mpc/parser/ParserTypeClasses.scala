@@ -1,7 +1,7 @@
 package org.treemage
 package mpc.parser
 
-import org.treemage.mpc.typeclasses.Monad
+import mpc.typeclasses.Monad
 
 object ParserTypeClasses:
   given Monad[Parser] = new Monad[Parser]:

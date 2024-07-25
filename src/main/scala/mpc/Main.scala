@@ -6,15 +6,14 @@ import mpc.parser.extensions.StringExtensions.nonEmpty
 import mpc.parser.{Parser, ParserInput, ParserResult}
 import mpc.typeclasses.Applicative.{*>, <*}
 import mpc.typeclasses.Functor.*
-import mpc.typeclasses.{Applicative, Functor}
+import mpc.typeclasses.{Applicative, Functor, Traversable}
 
 @main
 def main: Unit =
-  val text =
-    ""
+  val text       = "1,2,3"
   val ws         = Parser.range(_.isWhitespace)
   val uint       = Parser.range(_.isDigit).nonEmpty.map(_.toInt)
-  val sep        = ws *> Parser.text(",") <* ws
+  val sep        = ws *> Parser.char(',') <* ws
   val listOfUInt = ws *> Parser.sepBy(sep)(uint)
 
   val parser =

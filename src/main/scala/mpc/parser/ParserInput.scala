@@ -15,6 +15,9 @@ object ParserInput:
     def advanceBy(length: Int): Option[ParserInput] = Option.when(
       self.hasCapacityRemaining(length)
     )(self.copy(currentChar = self.currentChar + length))
+    def nextChar: Option[Char] = Option.when(
+      self.hasCapacityRemaining(1)
+    )(self.input.charAt(self.currentChar))
     def nextChars(length: Int): Option[String] = Option.when(
       self.hasCapacityRemaining(length)
     )(self.input.slice(self.currentChar, self.currentChar + length))
