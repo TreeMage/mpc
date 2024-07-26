@@ -7,10 +7,12 @@ trait Traversable[F[_]] extends Foldable[F] with Functor[F]:
     traverse(fga)(identity)
 
 object Traversable:
+  def apply[F[_]: Traversable]: Traversable[F] = summon[Traversable[F]]
+  
   extension [F[_]: Traversable, A](self: F[A])
     def traverse[B, G[_]: Applicative](f: A => G[B]): G[F[B]] =
-      summon[Traversable[F]].traverse(self)(f)
+      Traversable[F].traverse(self)(f)
 
   extension [F[_]: Traversable, G[_]: Applicative, A](self: F[G[A]])
     def sequence: G[F[A]] =
-      summon[Traversable[F]].sequence(self)
+      Traversable[F].sequence(self)

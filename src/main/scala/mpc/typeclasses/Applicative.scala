@@ -12,6 +12,8 @@ trait Applicative[F[_]] extends Functor[F]:
     ap(fa)(ap(fb)(pure(b => a => f(a, b))))
 
 object Applicative:
+  def apply[F[_]: Applicative]: Applicative[F] = summon[Applicative[F]]
+  
   extension [F[_], A](self: F[A])(using F: Applicative[F])
     @targetName("zip")
     def <*>[B](fb: F[B]): F[(A, B)] = F.map2(self, fb)((_, _))

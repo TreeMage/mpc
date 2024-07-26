@@ -7,6 +7,8 @@ trait Functor[F[_]]:
   def map[A, B](fa: F[A], f: A => B): F[B]
 
 object Functor:
+  def apply[F[_]: Functor]: Functor[F] = summon[Functor[F]]
+
   extension [A, F[_]](self: F[A])(using F: Functor[F])
     @targetName("infixMap")
     def `<$>`[B](f: A => B): F[B] = self.map(f)
