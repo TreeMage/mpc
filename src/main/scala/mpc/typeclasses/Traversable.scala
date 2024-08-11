@@ -8,7 +8,7 @@ trait Traversable[F[_]] extends Foldable[F] with Functor[F]:
 
 object Traversable:
   def apply[F[_]: Traversable]: Traversable[F] = summon[Traversable[F]]
-  
+
   extension [F[_]: Traversable, A](self: F[A])
     def traverse[B, G[_]: Applicative](f: A => G[B]): G[F[B]] =
       Traversable[F].traverse(self)(f)

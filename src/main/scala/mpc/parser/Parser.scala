@@ -4,12 +4,14 @@ package mpc.parser
 import ParserError.{UnexpectedEndOfInput, UnexpectedInput}
 import mpc.typeclasses.Functor.*
 import mpc.typeclasses.Monad.*
+
 import ParserTypeClasses.given
 import ParserOps.*
 import mpc.typeclasses.Traversable.*
 import mpc.util.ListTypeClasses.given
 
 import scala.annotation.tailrec
+import scala.util.matching.Regex
 
 case class Parser[+A](run: ParserInput => ParserResult[A])
 
@@ -64,6 +66,21 @@ object Parser:
     val (acc, currentInput) = go(List.empty, input)
     ParserResult.Success(currentInput, acc.reverse.mkString)
   )
+
+  def regex(regExp: Regex): Parser[String] =
+    Parser(input =>
+      regExp.findPrefixOf(input.remainingText) match
+        case Some(value) =>
+          ParserResult.Success(input.advanceBy(value.length).get, value)
+        case None =>
+          ParserResult.Fail(
+            input,
+            ParserError.UnexpectedInput(
+              input.currentLocation,
+              s"Tried to match '${input.remainingText.slice(0, 10)}...' with regex $regExp but found no match."
+            )
+          )
+    )
 
   // TODO: Make this tail-recursive
   def sepBy[A](sep: Parser[Any])(value: Parser[A]): Parser[List[A]] =

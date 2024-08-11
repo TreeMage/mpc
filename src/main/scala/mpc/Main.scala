@@ -8,16 +8,20 @@ import mpc.typeclasses.Applicative.{*>, <*}
 import mpc.typeclasses.Functor.*
 import mpc.typeclasses.{Applicative, Functor, Traversable}
 
+import org.treemage.json.JsonParser
+
 @main
 def main: Unit =
-  val text       = "1,2,3"
-  val ws         = Parser.range(_.isWhitespace)
-  val uint       = Parser.range(_.isDigit).nonEmpty.map(_.toInt)
-  val sep        = ws *> Parser.char(',') <* ws
-  val listOfUInt = ws *> Parser.sepBy(sep)(uint)
-
+  val text =
+    """
+      |{
+      |  "it": {
+      |     "works": [1, {"with": ["nested",[true, "stuff", null]]}],
+      |  },
+      |  "yeah": null
+      |}""".stripMargin
   val parser =
-    for parsed <- listOfUInt
+    for parsed <- JsonParser.jsonParser
     yield parsed
   parser.run(ParserInput.make(text)) match
     case ParserResult.Success(remainingInput, currentValue) =>

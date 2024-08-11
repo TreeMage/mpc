@@ -12,6 +12,8 @@ object ParserInput:
       self.remainingCharacters >= length
 
     def remainingCharacters: Int = self.input.length - self.currentChar
+    def remainingText: String =
+      self.input.slice(self.currentChar, self.input.length)
     def advanceBy(length: Int): Option[ParserInput] = Option.when(
       self.hasCapacityRemaining(length)
     )(self.copy(currentChar = self.currentChar + length))

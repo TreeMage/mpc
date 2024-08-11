@@ -1,9 +1,13 @@
 package org.treemage
 package mpc.parser
 
-import ParserTypeClasses.given
-import org.treemage.mpc.typeclasses.Functor.*
-import org.treemage.mpc.typeclasses.Monad.*
+import mpc.parser.ParserTypeClasses.given
+import mpc.typeclasses.Functor.*
+import mpc.typeclasses.Monad.*
+
+import org.treemage.mpc.typeclasses.Applicative.*>
+
+import scala.annotation.{showAsInfix, targetName}
 
 object ParserOps:
   extension [A](self: Parser[A])
@@ -15,10 +19,19 @@ object ParserOps:
           ParserResult.Success(input, None)
     )
 
-    def orElse[B](other: Parser[B]): Parser[A | B] =
+    def orElse[B](other: => Parser[B]): Parser[A | B] =
       for
         first <- self.option
         second <- first match
           case None        => other
           case Some(value) => Parser.succeed(value)
       yield second
+
+    @targetName("infixOr")
+    def |[B](other: => Parser[B]): Parser[A | B] = self.orElse(other)
+
+    def seperatedBy(sep: => Parser[Any]): Parser[List[A]] =
+      Parser.sepBy(sep)(self)
+
+    def as[B](value: => B): Parser[B] =
+      self.map(_ => value)
