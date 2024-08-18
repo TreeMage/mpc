@@ -2,13 +2,12 @@ package org.treemage
 package json
 
 import mpc.parser.Parser
-import mpc.parser.extensions.StringExtensions.*
+import mpc.parser.ParserOps.*
 import mpc.parser.ParserTypeClasses.given
+import mpc.parser.extensions.StringExtensions.*
+import mpc.typeclasses.Applicative.{*>, <*, <*>}
 import mpc.typeclasses.Functor
 import mpc.typeclasses.Functor.*
-
-import org.treemage.mpc.parser.ParserOps.*
-import org.treemage.mpc.typeclasses.Applicative.{*>, <*, <*>}
 
 import scala.language.postfixOps
 
@@ -23,10 +22,12 @@ object JsonParser:
       .map(_.toInt)
       .map(JsonValue.JsonInt.apply)
 
-  private def jsonFloat: Parser[JsonValue.JsonFloat] = Parser
-    .regex("""[+-]?(\d*)\.\d+""".r)
-    .map(_.toFloat)
-    .map(JsonValue.JsonFloat.apply)
+  private def jsonFloat: Parser[JsonValue.JsonFloat] =
+    Parser
+      .regex("""[+-]?(\d*)\.\d+""".r)
+      .nonEmpty
+      .map(_.toFloat)
+      .map(JsonValue.JsonFloat.apply)
 
   private def jsonBoolean: Parser[JsonValue.JsonBoolean] =
     (Parser.text("true") | Parser.text("false")).map {
@@ -45,9 +46,12 @@ object JsonParser:
     (Parser.char('\"') *> Parser.range(_ != '\"') <* Parser.char('\"'))
       .map(JsonValue.JsonString.apply)
 
-  private lazy val jsonArray = ws *> Parser.char('[') *> ws *> jsonValue
-    .seperatedBy(sepIgnoringWhiteSpace(','))
-    .map(JsonValue.JsonArray.apply) <* ws <* Parser.char(']') <* ws
+  private def block[A](open: Char, close: Char)(content: Parser[A]): Parser[A] =
+    ws *> Parser.char(open) *> ws *> content <* ws <* Parser.char(close) <* ws
+
+  private lazy val jsonArray: Parser[JsonValue.JsonArray] =
+    block('[', ']')(jsonValue.seperatedBy(sepIgnoringWhiteSpace(',')))
+      .map(JsonValue.JsonArray.apply)
 
   private lazy val keyValuePair: Parser[(JsonValue.JsonString, JsonValue)] =
     (ws *> jsonString <* ws <* Parser.char(
@@ -55,12 +59,11 @@ object JsonParser:
     ) <* ws) <*> (ws *> jsonValue <* ws)
 
   private lazy val jsonObject: Parser[JsonValue.JsonObject] =
-    (ws *> Parser.char('{') *> ws *> keyValuePair.seperatedBy(
-      sepIgnoringWhiteSpace(',')
-    ) <* ws <* Parser.char('}') <* ws).map(entries =>
-      JsonValue.JsonObject(Map.from(entries.map {
-        case JsonValue.JsonString(key) -> value => key -> value
-      }))
+    block('{', '}')(keyValuePair.seperatedBy(sepIgnoringWhiteSpace(','))).map(
+      entries =>
+        JsonValue.JsonObject(Map.from(entries.map {
+          case JsonValue.JsonString(key) -> value => key -> value
+        }))
     )
 
   private lazy val jsonValue: Parser[JsonValue] =
