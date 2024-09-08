@@ -6,7 +6,8 @@ lazy val root = (project in file("."))
   .settings(
     name             := "mpc",
     idePackagePrefix := Some("org.treemage")
-  ).aggregate(core, json)
+  )
+  .aggregate(core, json)
 
 lazy val core = (project in file("mpc-core")).settings(
   name             := "mpc-core",
